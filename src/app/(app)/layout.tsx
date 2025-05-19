@@ -16,7 +16,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { SiteLogo } from "@/components/shared/site-logo";
-import { LayoutDashboard, Brain } from "lucide-react";
+import { LayoutDashboard } from "lucide-react"; // Removed Brain icon
 import type { PropsWithChildren } from "react";
 
 // A client component to use useSidebar hook for the trigger
@@ -39,7 +39,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
   const menuItems = [
     { href: "/dashboard", label: "Daily Log", icon: LayoutDashboard },
-    { href: "/ai-query", label: "AI Query", icon: Brain },
+    // { href: "/ai-query", label: "AI Query", icon: Brain }, // Removed AI Query link
   ];
 
   // Initialize with a consistent value for SSR and initial client render.

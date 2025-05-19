@@ -2,7 +2,7 @@
 "use server";
 
 import { z } from "zod";
-import { queryLogs as queryLogsFlow, type QueryLogsInput, type QueryLogsOutput } from "@/ai/flows/query-logs";
+// Removed AI-related imports: queryLogsFlow, QueryLogsInput, QueryLogsOutput
 import type { FullLogEntry, LogEntryData } from "@/types";
 
 const logEntrySchema = z.object({
@@ -26,7 +26,12 @@ export async function saveLog(data: LogEntryData): Promise<{ success: boolean; m
   const validation = logEntrySchema.safeParse(data);
 
   if (!validation.success) {
-    return { success: false, message: "Invalid data. " + validation.error.flatten().fieldErrors };
+    // Improved error message for Zod validation
+    const fieldErrors = validation.error.flatten().fieldErrors;
+    const errorMessages = Object.entries(fieldErrors)
+      .map(([field, messages]) => `${field}: ${messages?.join(', ')}`)
+      .join('; ');
+    return { success: false, message: "Invalid data: " + errorMessages };
   }
 
   const validatedData = validation.data;
@@ -45,8 +50,8 @@ export async function saveLog(data: LogEntryData): Promise<{ success: boolean; m
     timestamp,
   };
 
-  // Placeholder for Firebase save operation
-  console.log("Saving log to Firebase (simulated):", JSON.stringify(fullLogEntry, null, 2));
+  // Placeholder for Firebase save operation (or your future MySQL save)
+  console.log("Saving log (simulated):", JSON.stringify(fullLogEntry, null, 2));
   // Example: await db.collection("sites").doc(siteId).collection("logs").doc(date).set(fullLogEntry);
   
   // Simulate successful save
@@ -54,20 +59,4 @@ export async function saveLog(data: LogEntryData): Promise<{ success: boolean; m
   return { success: true, message: "Log saved successfully!", logId };
 }
 
-export async function handleAiQuery(question: string): Promise<QueryLogsOutput | { error: string }> {
-  if (!question.trim()) {
-    return { error: "Question cannot be empty." };
-  }
-
-  try {
-    const input: QueryLogsInput = { question };
-    // This is where you would typically fetch relevant logs from Firebase based on the question's context
-    // For now, the AI flow might be generalized or expect data to be passed differently.
-    // We are calling the Genkit flow directly.
-    const result = await queryLogsFlow(input);
-    return result;
-  } catch (error) {
-    console.error("Error querying AI:", error);
-    return { error: "Failed to get answer from AI. Please try again." };
-  }
-}
+// Removed handleAiQuery function
