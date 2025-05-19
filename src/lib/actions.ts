@@ -2,8 +2,8 @@
 "use server";
 
 import { z } from "zod";
-// Removed AI-related imports: queryLogsFlow, QueryLogsInput, QueryLogsOutput
 import type { FullLogEntry, LogEntryData } from "@/types";
+import { insertLogEntry, closeDb } from "@/lib/db"; // Import DB functions
 
 const logEntrySchema = z.object({
   temperature: z.coerce.number().nullable(),
@@ -26,7 +26,6 @@ export async function saveLog(data: LogEntryData): Promise<{ success: boolean; m
   const validation = logEntrySchema.safeParse(data);
 
   if (!validation.success) {
-    // Improved error message for Zod validation
     const fieldErrors = validation.error.flatten().fieldErrors;
     const errorMessages = Object.entries(fieldErrors)
       .map(([field, messages]) => `${field}: ${messages?.join(', ')}`)
@@ -36,10 +35,9 @@ export async function saveLog(data: LogEntryData): Promise<{ success: boolean; m
 
   const validatedData = validation.data;
 
-  // In a real app, you would get siteId and userId from session/auth
   const siteId = "SITE_001"; 
   const userId = "USER_XYZ"; 
-  const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const date = new Date().toISOString().split('T')[0]; 
   const timestamp = Date.now();
 
   const fullLogEntry: FullLogEntry = {
@@ -50,13 +48,25 @@ export async function saveLog(data: LogEntryData): Promise<{ success: boolean; m
     timestamp,
   };
 
-  // Placeholder for Firebase save operation (or your future MySQL save)
-  console.log("Saving log (simulated):", JSON.stringify(fullLogEntry, null, 2));
-  // Example: await db.collection("sites").doc(siteId).collection("logs").doc(date).set(fullLogEntry);
-  
-  // Simulate successful save
-  const logId = `${siteId}-${date}-${timestamp}`;
-  return { success: true, message: "Log saved successfully!", logId };
-}
+  try {
+    const result = await insertLogEntry(fullLogEntry);
+    // Note: closeDb() might be better handled globally or per request lifecycle,
+    // but for simplicity, we'll close it after each operation here.
+    // In a high-traffic app, you'd manage connections differently.
+    // await closeDb(); // Potentially remove if connection pooling is implemented
 
-// Removed handleAiQuery function
+    if (result.lastID) {
+      return { success: true, message: "Log saved successfully to SQLite!", logId: result.lastID.toString() };
+    } else {
+      return { success: false, message: "Log entry was not saved to SQLite (no ID returned)." };
+    }
+  } catch (error) {
+    console.error("Failed to save log to SQLite:", error);
+    // await closeDb(); // Ensure DB is closed on error too
+    let errorMessage = "An unexpected error occurred while saving the log.";
+    if (error instanceof Error) {
+        errorMessage = error.message;
+    }
+    return { success: false, message: `Failed to save log to SQLite: ${errorMessage}` };
+  }
+}
