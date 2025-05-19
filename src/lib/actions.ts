@@ -3,7 +3,10 @@
 
 import { z } from "zod";
 import type { FullLogEntry, LogEntryData } from "@/types";
-import { insertLogEntry, closeDb } from "@/lib/db"; // Import DB functions
+
+// This variable will store the last submitted log in memory on the server.
+// It will reset if the server restarts.
+let lastSubmittedLog: FullLogEntry | null = null;
 
 const logEntrySchema = z.object({
   temperature: z.coerce.number().nullable(),
@@ -22,7 +25,7 @@ const logEntrySchema = z.object({
   remarks: z.string().optional().default(""),
 });
 
-export async function saveLog(data: LogEntryData): Promise<{ success: boolean; message: string; logId?: string }> {
+export async function saveLog(data: LogEntryData): Promise<{ success: boolean; message: string; jsonData?: string }> {
   const validation = logEntrySchema.safeParse(data);
 
   if (!validation.success) {
@@ -48,25 +51,19 @@ export async function saveLog(data: LogEntryData): Promise<{ success: boolean; m
     timestamp,
   };
 
-  try {
-    const result = await insertLogEntry(fullLogEntry);
-    // Note: closeDb() might be better handled globally or per request lifecycle,
-    // but for simplicity, we'll close it after each operation here.
-    // In a high-traffic app, you'd manage connections differently.
-    // await closeDb(); // Potentially remove if connection pooling is implemented
+  // Store the log entry in our server-side variable
+  lastSubmittedLog = fullLogEntry;
+  
+  console.log("Log data captured in variable:", JSON.stringify(lastSubmittedLog, null, 2));
 
-    if (result.lastID) {
-      return { success: true, message: "Log saved successfully to SQLite!", logId: result.lastID.toString() };
-    } else {
-      return { success: false, message: "Log entry was not saved to SQLite (no ID returned)." };
-    }
-  } catch (error) {
-    console.error("Failed to save log to SQLite:", error);
-    // await closeDb(); // Ensure DB is closed on error too
-    let errorMessage = "An unexpected error occurred while saving the log.";
-    if (error instanceof Error) {
-        errorMessage = error.message;
-    }
-    return { success: false, message: `Failed to save log to SQLite: ${errorMessage}` };
-  }
+  return { 
+    success: true, 
+    message: "Log data captured successfully in a server-side variable.",
+    jsonData: JSON.stringify(lastSubmittedLog, null, 2) // Optionally return the JSON
+  };
+}
+
+// You can add a new action to retrieve the last submitted log if needed for debugging/display
+export async function getLastSubmittedLog(): Promise<{ log: FullLogEntry | null }> {
+  return { log: lastSubmittedLog };
 }
