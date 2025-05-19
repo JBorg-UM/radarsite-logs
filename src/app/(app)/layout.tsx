@@ -42,13 +42,13 @@ export default function AppLayout({ children }: PropsWithChildren) {
     { href: "/ai-query", label: "AI Query", icon: Brain },
   ];
 
-  // Initialize open state from cookie or default (true)
-  // This is a simplified example; true persistence requires reading cookie server-side or in useEffect
-  const defaultSidebarOpen = typeof window !== 'undefined' ? document.cookie.includes('sidebar_state=true') : true;
+  // Initialize with a consistent value for SSR and initial client render.
+  // The SidebarProvider will handle cookie synchronization internally.
+  const staticDefaultSidebarOpen = true;
 
 
   return (
-    <SidebarProvider defaultOpen={defaultSidebarOpen}>
+    <SidebarProvider defaultOpen={staticDefaultSidebarOpen}>
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarHeader className="p-4">
           <SiteLogo showText={false} iconClassName="h-7 w-7 text-sidebar-primary" />
