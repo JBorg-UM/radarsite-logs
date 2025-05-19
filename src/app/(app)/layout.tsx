@@ -16,9 +16,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { SiteLogo } from "@/components/shared/site-logo";
-import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Brain, LogOut, PanelLeft } from "lucide-react";
-import { PropsWithChildren } from "react";
+import { LayoutDashboard, Brain } from "lucide-react";
+import type { PropsWithChildren } from "react";
 
 // A client component to use useSidebar hook for the trigger
 function AppHeader() {
@@ -29,12 +28,7 @@ function AppHeader() {
         <div className="flex-1">
           {/* Placeholder for breadcrumbs or page title */}
         </div>
-        <Button variant="outline" size="icon" asChild>
-          <Link href="/"> {/* Simplified logout, redirects to login */}
-            <LogOut className="h-5 w-5" />
-            <span className="sr-only">Logout</span>
-          </Link>
-        </Button>
+        {/* Logout button removed as per user request */}
       </header>
   );
 }
